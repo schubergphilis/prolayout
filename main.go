@@ -2,8 +2,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"golang.org/x/tools/go/analysis/singlechecker"
 	"gopkg.in/yaml.v3"
@@ -12,15 +14,27 @@ import (
 	"github.com/wimspaargaren/prolayout/internal/model"
 )
 
-func main() {
-	data, err := os.ReadFile(".prolayout.yml")
+const proLayoutFile = ".prolayout.yml"
+
+func readAndUnmarshalProLayoutYML(proLayoutFile string) (*model.Root, error) {
+	data, err := os.ReadFile(filepath.Clean(proLayoutFile))
 	if err != nil {
-		log.Fatalf("error: %v", err)
+		return nil, fmt.Errorf("'%w'", err)
 	}
 	t := model.Root{}
 	err = yaml.Unmarshal(data, &t)
 	if err != nil {
-		log.Fatalf("error: %v", err)
+		return nil, fmt.Errorf("'%w'", err)
 	}
-	singlechecker.Main(analyzer.New(t))
+
+	return &t, nil
+}
+
+func main() {
+	unmarshalledProLayoutYML, err := readAndUnmarshalProLayoutYML(proLayoutFile)
+	if err != nil {
+		log.Fatalf("failed to unmarshal '%s': '%v'", proLayoutFile, err)
+	}
+
+	singlechecker.Main(analyzer.New(*unmarshalledProLayoutYML))
 }

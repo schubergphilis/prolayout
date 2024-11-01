@@ -1,3 +1,6 @@
 .task
 .vscode
+coverage.html
+functioncoverage.out
+profile.cov
 reports

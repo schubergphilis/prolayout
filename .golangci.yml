@@ -130,6 +130,7 @@ linters:
     - nilnil
     - nlreturn
     - paralleltest
+    - testpackage
     - varnamelen
     - wsl
 
@@ -147,14 +148,16 @@ issues:
     - path: _test\.go
       linters:
         - funlen
-
     - linters:
         - staticcheck
       text: "SA9003:"
-
     - linters:
         - lll
       text: "^//go:generate "
+    - linters:
+        - revive
+      path: internal/analyzer/analyzer.go
+      text: "cyclomatic: function \\(\\*runner\\).assessDir has cyclomatic complexity 8 \\(\\> max enabled 7\\)"
 
   exclude-use-default: false
 

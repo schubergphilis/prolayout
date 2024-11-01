@@ -58,10 +58,7 @@ func (r *runner) assessDir(pass *analysis.Pass) (*model.Dir, error) {
 	dir := &model.Dir{}
 
 	for _, folder := range packageSplittedPerFolder {
-		if len(dirs) == 0 {
-			return nil, nil
-		}
-		if strings.HasSuffix(folder, ".test") {
+		if len(dirs) == 0 || strings.HasSuffix(folder, ".test") {
 			return nil, nil
 		}
 
@@ -70,12 +67,16 @@ func (r *runner) assessDir(pass *analysis.Pass) (*model.Dir, error) {
 			return nil, err
 		}
 		if !ok {
+			if len(pass.Files) == 0 || packagePathWithoutModule == "" {
+				continue
+			}
 			pass.ReportRangef(pass.Files[0], "package not allowed: %s, %s not found in allowed names: [%s]", packagePathWithoutModule, folder, strings.Join(dirsNames(dirs), ","))
 			break
 		}
 		dir = res
 		dirs = res.Dirs
 	}
+
 	return dir, nil
 }
 

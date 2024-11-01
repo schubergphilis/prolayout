@@ -2,3 +2,5 @@
 module: "github.com/wimspaargaren/prolayout"
 root:
   - name: "bar"
+  - name: "internal"
+  - name: "tests"

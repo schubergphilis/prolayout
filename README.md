@@ -21,7 +21,7 @@ fashion.
 
 ## Example configuration file
 
-```YAML
+```yml
 module: "github.com/wimspaargaren/prolayout"
 root:
   - name: "cmd"
@@ -35,3 +35,5 @@ root:
     files:
       - name: ".*_test.go"
 ```
+
+and run `prolayout ./...`
