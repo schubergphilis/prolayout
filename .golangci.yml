@@ -22,7 +22,8 @@ linters-settings:
         deny:
           - pkg: "github.com/tj/assert"
             desc: not allowed, did you mean testify assert?
-
+          - pkg: "log"
+            desc: Use 'log "github.com/sirupsen/logrus"' instead
   errcheck:
     check-type-assertions: false
   gci:

@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 
@@ -14,6 +15,8 @@ import (
 
 // New creates a new analyzer for a given root directory.
 func New(root model.Root) *analysis.Analyzer {
+	// log.WithFields(log.Fields{"root": root}).Info("New")
+
 	runner := newRunner(root)
 	return &analysis.Analyzer{
 		Name:     "prolayout",
@@ -28,10 +31,14 @@ type runner struct {
 }
 
 func newRunner(root model.Root) *runner {
+	// log.WithFields(log.Fields{"root": root}).Info("newRunner")
+
 	return &runner{Root: root}
 }
 
 func (r *runner) run(pass *analysis.Pass) (any, error) {
+	// log.WithFields(log.Fields{"pass": pass}).Info("run")
+
 	err := r.assess(pass)
 	if err != nil {
 		return nil, err
@@ -41,6 +48,8 @@ func (r *runner) run(pass *analysis.Pass) (any, error) {
 }
 
 func (r *runner) assess(pass *analysis.Pass) error {
+	// log.WithFields(log.Fields{"pass": pass}).Info("assess")
+
 	dir, err := r.assessDir(pass)
 	if err != nil {
 		return err
@@ -50,6 +59,8 @@ func (r *runner) assess(pass *analysis.Pass) error {
 }
 
 func (r *runner) assessDir(pass *analysis.Pass) (*model.Dir, error) {
+	// log.WithFields(log.Fields{"pass": pass}).Info("assessDir")
+
 	module := r.Root.Module
 	packagePathWithoutModule := strings.ReplaceAll(pass.Pkg.Path(), module, "")
 	packagePathWithoutModule = strings.TrimPrefix(packagePathWithoutModule, "/")
@@ -58,7 +69,13 @@ func (r *runner) assessDir(pass *analysis.Pass) (*model.Dir, error) {
 	dir := &model.Dir{}
 
 	for _, folder := range packageSplittedPerFolder {
-		if len(dirs) == 0 || strings.HasSuffix(folder, ".test") {
+		log.WithFields(log.Fields{"folder": folder}).Info("assessDir")
+		// if folder == ".test" {
+		// 	continue
+		// }
+
+		// if len(dirs) == 0 || strings.HasSuffix(folder, ".test") {
+		if len(dirs) == 0 {
 			return nil, nil
 		}
 
@@ -67,7 +84,10 @@ func (r *runner) assessDir(pass *analysis.Pass) (*model.Dir, error) {
 			return nil, err
 		}
 		if !ok {
-			if len(pass.Files) == 0 || packagePathWithoutModule == "" {
+			// if len(pass.Files) == 0 || packagePathWithoutModule == "" {
+
+			// if packagePathWithoutModule == "" then this indicates that there is a main.go in the root
+			if len(pass.Files) == 0 {
 				continue
 			}
 			pass.ReportRangef(pass.Files[0], "package not allowed: %s, %s not found in allowed names: [%s]", packagePathWithoutModule, folder, strings.Join(dirsNames(dirs), ","))
@@ -81,6 +101,8 @@ func (r *runner) assessDir(pass *analysis.Pass) (*model.Dir, error) {
 }
 
 func dirsNames(dirs []*model.Dir) []string {
+	// log.WithFields(log.Fields{"dirs": dirs}).Info("dirsNames")
+
 	names := make([]string, len(dirs))
 	for i, d := range dirs {
 		names[i] = d.Name
@@ -89,7 +111,11 @@ func dirsNames(dirs []*model.Dir) []string {
 }
 
 func (r *runner) assessFiles(pass *analysis.Pass, dir *model.Dir) error {
+	// log.WithFields(log.Fields{"pass": pass, "dir": dir}).Info("assessFiles")
+
 	if dir == nil || len(dir.Files) == 0 {
+		// log.WithFields(log.Fields{"dir": dir}).Trace("both dir and dir.Files are empty")
+
 		return nil
 	}
 	for _, file := range pass.Files {
@@ -105,6 +131,8 @@ func (r *runner) assessFiles(pass *analysis.Pass, dir *model.Dir) error {
 }
 
 func (r *runner) matchFiles(files []*model.File, name string) (bool, error) {
+	// log.WithFields(log.Fields{"files": files, "name": name}).Info("matchFiles")
+
 	for _, f := range files {
 		match, err := regexp.MatchString(f.Name, name+".go")
 		if err != nil {
@@ -118,7 +146,11 @@ func (r *runner) matchFiles(files []*model.File, name string) (bool, error) {
 }
 
 func matchDir(dir []*model.Dir, name string) (*model.Dir, bool, error) {
+	// log.WithFields(log.Fields{"dir": dir, "name": name}).Info("matchDir")
+
 	for _, d := range dir {
+		// log.WithFields(log.Fields{"d": d, "dName": d.Name, "name": name}).Info("matchDir")
+
 		match, err := regexp.MatchString(d.Name, name)
 		if err != nil {
 			return nil, false, errors.ErrInvalidDirNameRegex{DirName: d.Name}
@@ -131,5 +163,7 @@ func matchDir(dir []*model.Dir, name string) (*model.Dir, bool, error) {
 }
 
 func splitPath(path string) []string {
+	// log.WithFields(log.Fields{"path": path}).Info("splitPath")
+
 	return strings.Split(path, "/")
 }

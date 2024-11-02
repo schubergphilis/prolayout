@@ -1,6 +1,8 @@
 ---
 module: "github.com/wimspaargaren/prolayout"
 root:
+  - name: ""
+  - name: ".test"
   - name: "bar"
   - name: "internal"
   - name: "tests"

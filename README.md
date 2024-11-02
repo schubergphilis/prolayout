@@ -36,4 +36,5 @@ root:
       - name: ".*_test.go"
 ```
 
-and run `prolayout ./...`
+and run `prolayout ./...`. It is possible to change the loggerLevel by
+specifying `--loggerLevel info`.

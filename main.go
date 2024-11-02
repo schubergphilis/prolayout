@@ -2,11 +2,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/tools/go/analysis/singlechecker"
 	"gopkg.in/yaml.v3"
 
@@ -30,10 +31,27 @@ func readAndUnmarshalProLayoutYML(proLayoutFile string) (*model.Root, error) {
 	return &t, nil
 }
 
+func configureLogging(loggerLevel string) error {
+	logrusLoggerLevel, err := log.ParseLevel(loggerLevel)
+	if err != nil {
+		return fmt.Errorf("unable to parse the logrusLoggerLevel: '%w'", err)
+	}
+	log.SetLevel(logrusLoggerLevel)
+	log.SetReportCaller(true)
+	return nil
+}
+
 func main() {
+	loggerLevel := flag.String("loggerLevel", "Fatal", "set the loggerLevel to either: Trace, Debug, Info, Warning, Error, Fatal or Panic")
+	flag.Parse()
+
+	if err := configureLogging(*loggerLevel); err != nil {
+		log.WithError(err).Fatal("could not configure logging")
+	}
+
 	unmarshalledProLayoutYML, err := readAndUnmarshalProLayoutYML(proLayoutFile)
 	if err != nil {
-		log.Fatalf("failed to unmarshal '%s': '%v'", proLayoutFile, err)
+		log.WithError(err).Fatal("failed to unmarshal")
 	}
 
 	singlechecker.Main(analyzer.New(*unmarshalledProLayoutYML))
