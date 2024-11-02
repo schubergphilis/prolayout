@@ -2,6 +2,7 @@
 package analyzer
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -51,26 +52,30 @@ func (r *runner) assess(pass *analysis.Pass) error {
 
 func (r *runner) assessDir(pass *analysis.Pass) (*model.Dir, error) {
 	module := r.Root.Module
+	fmt.Println("----1---", pass.Pkg.Path())
+
 	packagePathWithoutModule := strings.ReplaceAll(pass.Pkg.Path(), module, "")
 	packagePathWithoutModule = strings.TrimPrefix(packagePathWithoutModule, "/")
-	packageSplittedPerFolder := splitPath(packagePathWithoutModule)
+	packageSplitPerFolder := splitPath(packagePathWithoutModule)
 	dirs := r.Root.Root
 	dir := &model.Dir{}
 
-	for _, folder := range packageSplittedPerFolder {
-		if len(dirs) == 0 || strings.HasSuffix(folder, ".test") {
-			return nil, nil
-		}
+	for _, folder := range packageSplitPerFolder {
+		// if len(dirs) == 0 || strings.HasSuffix(folder, ".test") {
+		// 	return nil, nil
+		// }
 
+		fmt.Println("-------42-------", folder)
 		res, ok, err := matchDir(dirs, folder)
 		if err != nil {
 			return nil, err
 		}
 		if !ok {
-			if len(pass.Files) == 0 || packagePathWithoutModule == "" {
+			// if len(pass.Files) == 0 || packagePathWithoutModule == "" {
+			if len(pass.Files) == 0 {
 				continue
 			}
-			pass.ReportRangef(pass.Files[0], "package not allowed: %s, %s not found in allowed names: [%s]", packagePathWithoutModule, folder, strings.Join(dirsNames(dirs), ","))
+			pass.ReportRangef(pass.Files[0], "packagePathWithoutModule: '%s' not allowed as folder: '%s' was not found in allowed names: [%s]", packagePathWithoutModule, folder, strings.Join(dirsNames(dirs), ","))
 			break
 		}
 		dir = res
@@ -92,12 +97,21 @@ func (r *runner) assessFiles(pass *analysis.Pass, dir *model.Dir) error {
 	if dir == nil || len(dir.Files) == 0 {
 		return nil
 	}
+
 	for _, file := range pass.Files {
+		fmt.Println("---------------------52------", file.Name.Name)
+
 		matchedFile, err := r.matchFiles(dir.Files, file.Name.Name)
 		if err != nil {
 			return err
 		}
+
 		if !matchedFile {
+
+			for _, f := range file.Comments {
+				fmt.Println("fdsfdsfs", f.List[0])
+			}
+
 			pass.ReportRangef(file, "file not allowed in this folder: %s", file.Name.Name)
 		}
 	}
@@ -106,6 +120,8 @@ func (r *runner) assessFiles(pass *analysis.Pass, dir *model.Dir) error {
 
 func (r *runner) matchFiles(files []*model.File, name string) (bool, error) {
 	for _, f := range files {
+		fmt.Println("----------------------------45---------------------", f.Name)
+		fmt.Println("----------------------------46-----------------------------", name)
 		match, err := regexp.MatchString(f.Name, name+".go")
 		if err != nil {
 			return false, errors.ErrInvalidFileNameRegex{FileName: f.Name}
@@ -119,6 +135,21 @@ func (r *runner) matchFiles(files []*model.File, name string) (bool, error) {
 
 func matchDir(dir []*model.Dir, name string) (*model.Dir, bool, error) {
 	for _, d := range dir {
+		// if d.Name == "" {
+		fmt.Println("-------43----", d.Name)
+		fmt.Println("-------44-------", name)
+		// }
+
+		if d.Name == "" {
+
+			if name == "" || name == ".test" {
+				// if name == "" {
+				return d, true, nil
+			}
+			// return nil, false, nil
+			continue
+		}
+
 		match, err := regexp.MatchString(d.Name, name)
 		if err != nil {
 			return nil, false, errors.ErrInvalidDirNameRegex{DirName: d.Name}

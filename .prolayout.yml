@@ -1,6 +1,18 @@
 ---
 module: "github.com/wimspaargaren/prolayout"
 root:
-  - name: "bar"
-  - name: "internal"
+  - name: ""
+    files:
+      - name: main.go
+      - name: main_test.go
+  # - name: .test
+  - name: bar
+  - name: internal
+    dirs:
+      - name: analyzer
+        files:
+          - name: analyzer.go
+          - name: analyzer_test.go
+      - name: errors
+      - name: model
   - name: "tests"
